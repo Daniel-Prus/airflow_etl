@@ -83,7 +83,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             exponential_backoff=True
         )
 
-        stg_DimCustomers = LoadStagingDimCustomers(
+        stg_DimCustomers = MsSqlCustomOperator(
             task_id="stg_DimCustomers",
             mssql_conn_id="ms_sql_conn",
             database="NewStoreDW",
