@@ -95,6 +95,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             ingest_date=INGEST_DATE,
             source_db=NEW_STORE_DWH,
             source_table=RAW_DATA_DWH_TABLE,
+            destination_db=NEW_STORE_DWH,
             destination_table=STG_DIM_CUSTOMERS,
             schedule_interval=INTERVAL,
             autocommit=True

@@ -32,7 +32,7 @@ class MsSqlQuerySupportSCD2:
         sql = """
         DECLARE @IngestDate DATE ='{ingest_date}'
         INSERT INTO {destination_db}.{destination_table} 
-                    (CustomerID, FirstName, LastName, Address, City, PostalCode, Country, Phone, InsertDate)
+                    (CustomerID, FirstName, LastName, Address, City, PostalCode, Country, Phone, IngestDate)
         SELECT DISTINCT SRC.CustomerID_bk, SRC.FirstName_cust, SRC.LastName_cust, SRC.Address_cust, SRC.City_cust, 
                         SRC.PostalCode_cust, SRC.Country_cust, SRC.Phone_cust,  @IngestDate as IngestDate
         FROM {source_db}.{source_table} AS SRC
