@@ -1,0 +1,2 @@
+True,log
+0,<Logger airflow.providers.microsoft.mssql.hooks.mssql.MsSqlHook (INFO)>

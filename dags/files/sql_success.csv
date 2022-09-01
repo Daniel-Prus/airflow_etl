@@ -1,0 +1,16 @@
+True,dag_id,dag_start_date,dag_end_date,schedule_interval,task_id,source_db,source_table,destination_db,destination_table,start_date,end_date,execution_time,rows_affected,status,sql_query,error_message
+0,03_incremental_load_scd2_mssql,2022-01-01 00:00:00+00:00,,None,process_raw_data.extract_raw_data,NewStoreDB,dbo.Orders,NewStoreDW,dbo.NewStoreRawData,2022-08-30 13:19:55.002013,2022-08-30 13:19:55.005026,0,17,success,"
+        DECLARE @IngestDate DATE = '2022-07-04'
+        INSERT INTO  NewStoreDW.dbo.NewStoreRawData
+                (OrderID, CustomerID_sk, EmployeeID, OrderDate, RequiredDate, ShippedDate, ShipVia, Freight,
+                 ProductID, UnitPrice, Quantity, Discount, CustomerID_bk, FirstName_cust, LastName_cust,
+                Address_cust, City_cust, PostalCode_cust, Country_cust, Phone_cust, FileDate)
+
+        SELECT o.OrderID, o.CustomerID, o.EmployeeID, o.OrderDate, o.RequiredDate, o.ShippedDate, o.ShipVia, o.Freight,
+                od.ProductID, od.UnitPrice, od.Quantity, od.Discount,
+                c.CustomerID, c.FirstName, c.LastName, c.Address, c.City, c.PostalCode, c.Country, c.Phone, @IngestDate
+        FROM NewStoreDB.dbo.Orders AS o
+        JOIN NewStoreDB.dbo.OrderDetails AS od ON od.OrderID = o.OrderID
+        JOIN NewStoreDB.dbo.Customers AS c ON c.ID = o.CustomerID
+        WHERE CONVERT(DATE, OrderDate) = @IngestDate;
+        ",sadasd

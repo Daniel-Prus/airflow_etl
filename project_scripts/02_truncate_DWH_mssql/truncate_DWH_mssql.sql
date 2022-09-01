@@ -1,0 +1,7 @@
+USE NewStoreDW;
+
+TRUNCATE TABLE NewStoreRawData;
+TRUNCATE TABLE STG_DimCustomers;
+TRUNCATE TABLE STG_FactOrders;
+TRUNCATE TABLE DW_DimCustomers;
+TRUNCATE TABLE DW_FactOrders;
