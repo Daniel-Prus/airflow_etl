@@ -1,3 +1,3 @@
 SELECT COUNT(*)
 FROM NewStoreDW.dbo.NewStoreRawData
-WHERE FileDate = %(date)s
+WHERE FileDate = '%(ingest_date)s'

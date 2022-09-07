@@ -47,11 +47,6 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
 
     with TaskGroup("process_raw_data") as process_raw_data:
         # etl raw data from mssql NewStoreDB to msql NewStoreDW.dbo.NewStoreRawData by OrderDate
-        raw_data_support = MsSqlQuerySupportSCD2(ingest_date=INGEST_DATE, source_db=SOURCE_DB,
-                                                 source_table=SOURCE_TABLE, destination_db=NEW_STORE_DWH,
-                                                 destination_table=RAW_DATA_DWH_TABLE)
-        raw_data_query = raw_data_support.load_raw_data_query()
-
         extract_load_rawdata = MsSqlCustomOperator(
             task_id="extract_load_rawdata",
             conn_id="ms_sql_conn",
@@ -60,7 +55,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             source_table=SOURCE_TABLE,
             destination_db=NEW_STORE_DWH,
             destination_table=RAW_DATA_DWH_TABLE,
-            sql_query=raw_data_query,
+            sql='etl_raw_data.sql',
             schedule_interval=INTERVAL,
             autocommit=True,
         )
@@ -70,7 +65,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             task_id="raw_data_sql_sensor",
             conn_id="ms_sql_conn",
             sql='raw_data_sql_sensor.sql',
-            parameters={"date": INGEST_DATE},
+            parameters={"ingest_date": INGEST_DATE},
             xcom_task_id="process_raw_data.extract_load_rawdata",
             xcom_task_id_key="NewStoreDW.dbo.NewStoreRawData_rows_affected",
             fail_on_empty=False,
@@ -80,6 +75,8 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             soft_fail=False,
             exponential_backoff=True
         )
+
+        """
         stg_DimCustomers_query = MsSqlQuerySupportSCD2(ingest_date=INGEST_DATE, source_db=NEW_STORE_DWH,
                                                        source_table=RAW_DATA_DWH_TABLE, destination_db=NEW_STORE_DWH,
                                                        destination_table=STG_DIM_CUSTOMERS) \
@@ -96,6 +93,6 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             destination_table=STG_DIM_CUSTOMERS,
             schedule_interval=INTERVAL,
             autocommit=True
-        )
+        )"""
 start >> clear_xcom >> Label("etl raw data") >> process_raw_data >> process_staging
 """>> Label("Load staging") >> stg_DimCustomers"""

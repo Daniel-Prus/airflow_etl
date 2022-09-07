@@ -2,6 +2,7 @@ from airflow.models import BaseOperator
 from project_scripts.incremental_load_scd2_mssql.custom_hooks import MsSqlHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from project_scripts.incremental_load_scd2_mssql.mssql_query import MsSqlQuerySupportSCD2
+from psycopg2.sql import SQL
 from typing import Any, Optional
 import pandas as pd
 
@@ -19,7 +20,7 @@ class MsSqlCustomOperator(BaseOperator):
                              'end_date', 'status', 'sql_query', 'error_message')
 
     def __init__(self, conn_id: str, source_db: str, destination_db: str, source_table: str,
-                 destination_table: str, ingest_date: str, sql_query: str, schedule_interval: Optional = None,
+                 destination_table: str, ingest_date: str, sql: str, schedule_interval: Optional = None,
                  autocommit: bool = False, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.conn_id = conn_id
@@ -28,15 +29,10 @@ class MsSqlCustomOperator(BaseOperator):
         self.source_table = source_table
         self.destination_table = destination_table
         self.ingest_date = ingest_date
-        self.sql_query = sql_query
+        self.sql = sql
         self.schedule_interval = schedule_interval
         self.autocommit = autocommit
         self.hook = MsSqlHook(mssql_conn_id=self.conn_id, schema=self.destination_db, log_sql=True)
-        self.sql_query_support_class = MsSqlQuerySupportSCD2(ingest_date=ingest_date, source_db=source_db,
-                                                             destination_db=destination_db,
-                                                             source_table=source_table,
-                                                             destination_table=destination_table)
-
         self.hook_etl_job = PostgresHook(postgres_conn_id=self.etl_job_conn, schema=self.etl_job_db)
 
     def _get_cursor_etl_job(self) -> object:
@@ -53,29 +49,32 @@ class MsSqlCustomOperator(BaseOperator):
         return row_str
 
     def get_last_row_sql_sensor(self, cursor) -> str:
-        sql_query = self.sql_query_support_class.get_last_row_sql_sensor_query()
-        cursor.execute(sql_query)
+        sql = self.sql_support_class.get_last_row_sql_sensor_query()
+        cursor.execute(sql)
         row = cursor.fetchone()
         row_str = self.change_row_to_str(row)
         return row_str
 
     def get_rows_count_sql_sensor(self, cursor) -> int:
-        sql_query = self.sql_query_support_class.get_rows_count_sql_sensor_query()
-        cursor.execute(sql_query)
+        sql = self.sql_support_class.get_rows_count_sql_sensor_query()
+        cursor.execute(sql)
         rows_count = cursor.fetchone()
         return rows_count[0]
 
     def execute(self, context: Any) -> None:
-
+        # run main sql guery
+        final_sql = []
+        final_sql.append(SQL(self.sql))
+        sql_str = final_sql[0].as_string(SQL)
         try:
-            # run main sql guery
-            self.hook.run(self.sql_query, self.autocommit)
+
+            self.hook.run(final_sql, self.autocommit)
 
             # prepare etl summary row when -> Success
             row = ((self.dag_id, self.start_date, self.end_date, self.schedule_interval, self.task_id, self.ingest_date,
                     self.source_db, self.source_table, self.destination_db, self.destination_table,
                     self.hook.query_start_datetime, self.hook.query_end_datetime, self.hook.rows_affected, 'Success',
-                    self.sql_query.replace("'", "''")),)
+                    sql_str.replace("'", "''")),)
 
             # insert success row to etl job summary table
             self.hook_etl_job.insert_rows(table=self.etl_job_table, rows=row,
@@ -91,10 +90,13 @@ class MsSqlCustomOperator(BaseOperator):
             row = ((self.dag_id, self.start_date, self.end_date, self.schedule_interval, self.task_id,
                     self.ingest_date, self.source_db, self.source_table, self.destination_db, self.destination_table,
                     self.hook.query_start_datetime, self.hook.query_end_datetime, 'Fail',
-                    self.sql_query.replace("'", "''"), error_message),)
+                    sql_str.replace("'", "''"), error_message),)
 
             # insert fail row to etl job summary table
             self.hook_etl_job.insert_rows(table=self.etl_job_table, rows=row,
                                           target_fields=self.target_fields_if_fail,
                                           commit_every=0)
             raise e
+
+        for output in self.hook.conn.notices:
+            self.log.info(output)
