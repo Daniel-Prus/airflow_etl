@@ -34,7 +34,7 @@ STG_DIM_CUSTOMERS = "dbo.STG_DimCustomers"
 "0 10 * * *"
 with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
          schedule_interval=None, catchup=False, tags=['airflow_etl'],
-         template_searchpath="/opt/airflow/dags/project_scripts/incremental_load_scd2_mssql/") as dag:
+         template_searchpath="/opt/airflow/dags/project_scripts/incremental_load_scd2_mssql/sql") as dag:
     start = DummyOperator(task_id="start")
 
     clear_xcom = PythonOperator(
@@ -66,14 +66,11 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
         )
 
     with TaskGroup("process_staging") as process_staging:
-        raw_data_sensor_query = MsSqlQuerySupportSCD2(ingest_date=INGEST_DATE, destination_db=NEW_STORE_DWH,
-                                                      destination_table=RAW_DATA_DWH_TABLE) \
-            .get_rows_count_sql_sensor_query()
-
         raw_data_sql_sensor = CustomSqlSensor(
             task_id="raw_data_sql_sensor",
             conn_id="ms_sql_conn",
-            sql=raw_data_sensor_query,
+            sql='raw_data_sql_sensor.sql',
+            parameters={"date": INGEST_DATE},
             xcom_task_id="process_raw_data.extract_load_rawdata",
             xcom_task_id_key="NewStoreDW.dbo.NewStoreRawData_rows_affected",
             fail_on_empty=False,
