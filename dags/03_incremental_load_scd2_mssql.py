@@ -50,7 +50,6 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
         extract_load_rawdata = MsSqlCustomOperator(
             task_id="extract_load_rawdata",
             conn_id="ms_sql_conn",
-            ingest_date=INGEST_DATE,
             source_db=SOURCE_DB,
             source_table=SOURCE_TABLE,
             destination_db=NEW_STORE_DWH,
@@ -58,6 +57,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             sql='etl_raw_data.sql',
             schedule_interval=INTERVAL,
             autocommit=True,
+            params={"ingest_date": INGEST_DATE}
         )
 
     with TaskGroup("process_staging") as process_staging:
@@ -65,7 +65,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             task_id="raw_data_sql_sensor",
             conn_id="ms_sql_conn",
             sql='raw_data_sql_sensor.sql',
-            parameters={"ingest_date": INGEST_DATE},
+            params={"ingest_date": INGEST_DATE},
             xcom_task_id="process_raw_data.extract_load_rawdata",
             xcom_task_id_key="NewStoreDW.dbo.NewStoreRawData_rows_affected",
             fail_on_empty=False,

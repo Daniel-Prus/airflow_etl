@@ -1,4 +1,4 @@
- DECLARE @IngestDate DATE = '%(ingest_date)s'
+ DECLARE @IngestDate DATE = '{{ params.ingest_date }}'
         INSERT INTO  NewStoreDW.dbo.NewStoreRawData
                 (OrderID, CustomerID_sk, EmployeeID, OrderDate, RequiredDate, ShippedDate, ShipVia, Freight,
                  ProductID, UnitPrice, Quantity, Discount, CustomerID_bk, FirstName_cust, LastName_cust,
