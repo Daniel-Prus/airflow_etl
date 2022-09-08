@@ -31,6 +31,8 @@ RAW_DATA_DWH_TABLE = "dbo.NewStoreRawData"
 STG_DIM_CUSTOMERS = "dbo.STG_DimCustomers"
 STG_FACT_ORDERS = "dbo.STG_FactOrders"
 DW_DIM_CUSTOMERS = "dbo.DW_DimCustomers"
+DW_FACT_ORDERS = "dbo.DW_FactOrders"
+
 "0 10 * * *"
 with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
          schedule_interval=None, catchup=False, tags=['airflow_etl'],
@@ -107,7 +109,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
         load_dw_DimCustomers = MsSqlCustomOperator(
             task_id="dw_DimCustomers",
             conn_id="ms_sql_conn",
-            sql="stg_dim_customers.sql",
+            sql="dw_dim_customers.sql",
             source_db=NEW_STORE_DWH,
             source_table=STG_DIM_CUSTOMERS,
             destination_db=NEW_STORE_DWH,
@@ -117,5 +119,18 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             params={"ingest_date": INGEST_DATE}
         )
 
+        load_dw_FactOrders = MsSqlCustomOperator(
+            task_id="dw_FactOrders",
+            conn_id="ms_sql_conn",
+            sql="dw_dim_customers.sql",
+            source_db=NEW_STORE_DWH,
+            source_table=STG_FACT_ORDERS,
+            destination_db=NEW_STORE_DWH,
+            destination_table=DW_FACT_ORDERS,
+            schedule_interval=INTERVAL,
+            autocommit=True,
+            params={"ingest_date": INGEST_DATE}
+        )
+        load_dw_DimCustomers >> load_dw_FactOrders
 
-start >> clear_xcom >> Label("etl raw data") >> process_raw_data >> process_staging
+start >> clear_xcom >> Label("etl raw data") >> process_raw_data >> process_staging >> process_dwh
