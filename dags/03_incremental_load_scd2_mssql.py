@@ -6,7 +6,6 @@ from airflow.utils.edgemodifier import Label
 from airflow.operators.python import PythonOperator
 from project_scripts.incremental_load_scd2_mssql.utils import cleanup_xcom
 from project_scripts.incremental_load_scd2_mssql.custom_operators import MsSqlCustomOperator
-from project_scripts.incremental_load_scd2_mssql.mssql_query import MsSqlQuerySupportSCD2
 from project_scripts.incremental_load_scd2_mssql.custom_sensors import CustomSqlSensor
 
 # Daily data pipeline by OrderDate:
@@ -30,7 +29,8 @@ SOURCE_TABLE = "dbo.Orders"
 NEW_STORE_DWH = "NewStoreDW"
 RAW_DATA_DWH_TABLE = "dbo.NewStoreRawData"
 STG_DIM_CUSTOMERS = "dbo.STG_DimCustomers"
-
+STG_FACT_ORDERS = "dbo.STG_FactOrders"
+DW_DIM_CUSTOMERS = "dbo.DW_DimCustomers"
 "0 10 * * *"
 with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
          schedule_interval=None, catchup=False, tags=['airflow_etl'],
@@ -64,7 +64,7 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
         raw_data_sql_sensor = CustomSqlSensor(
             task_id="raw_data_sql_sensor",
             conn_id="ms_sql_conn",
-            sql='raw_data_sql_sensor.sql',
+            sql="raw_data_sql_sensor.sql",
             params={"ingest_date": INGEST_DATE},
             xcom_task_id="process_raw_data.extract_load_rawdata",
             xcom_task_id_key="NewStoreDW.dbo.NewStoreRawData_rows_affected",
@@ -76,23 +76,46 @@ with DAG("03_incremental_load_scd2_mssql", start_date=datetime(2022, 1, 1),
             exponential_backoff=True
         )
 
-        """
-        stg_DimCustomers_query = MsSqlQuerySupportSCD2(ingest_date=INGEST_DATE, source_db=NEW_STORE_DWH,
-                                                       source_table=RAW_DATA_DWH_TABLE, destination_db=NEW_STORE_DWH,
-                                                       destination_table=STG_DIM_CUSTOMERS) \
-            .load_staging_dim_customers_query()
-
         load_stg_DimCustomers = MsSqlCustomOperator(
-            task_id="load_stg_DimCustomers",
+            task_id="stg_DimCustomers",
             conn_id="ms_sql_conn",
-            sql_query=stg_DimCustomers_query,
-            ingest_date=INGEST_DATE,
+            sql="stg_dim_customers.sql",
             source_db=NEW_STORE_DWH,
             source_table=RAW_DATA_DWH_TABLE,
             destination_db=NEW_STORE_DWH,
             destination_table=STG_DIM_CUSTOMERS,
             schedule_interval=INTERVAL,
-            autocommit=True
-        )"""
+            autocommit=True,
+            params={"ingest_date": INGEST_DATE}
+        )
+
+        load_fact_orders = MsSqlCustomOperator(
+            task_id="stg_FactOrders",
+            conn_id="ms_sql_conn",
+            sql="stg_fact_orders.sql",
+            source_db=NEW_STORE_DWH,
+            source_table=RAW_DATA_DWH_TABLE,
+            destination_db=NEW_STORE_DWH,
+            destination_table=STG_FACT_ORDERS,
+            schedule_interval=INTERVAL,
+            autocommit=True,
+            params={"ingest_date": INGEST_DATE}
+        )
+        raw_data_sql_sensor >> load_stg_DimCustomers >> load_fact_orders
+
+    with TaskGroup("process_dwh") as process_dwh:
+        load_dw_DimCustomers = MsSqlCustomOperator(
+            task_id="dw_DimCustomers",
+            conn_id="ms_sql_conn",
+            sql="stg_dim_customers.sql",
+            source_db=NEW_STORE_DWH,
+            source_table=STG_DIM_CUSTOMERS,
+            destination_db=NEW_STORE_DWH,
+            destination_table=DW_DIM_CUSTOMERS,
+            schedule_interval=INTERVAL,
+            autocommit=True,
+            params={"ingest_date": INGEST_DATE}
+        )
+
+
 start >> clear_xcom >> Label("etl raw data") >> process_raw_data >> process_staging
-""">> Label("Load staging") >> stg_DimCustomers"""
