@@ -18,10 +18,10 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- apache-airflow-providers-microsoft-mssql[common.sql]
                                     pymssql apache-airflow[odbc] pandas apache-airflow-providers-postgres}
   volumes:
-    - ./dags:/opt/airflow/dags
-    - ./logs:/opt/airflow/logs
+    - /01_project/dags:/opt/airflow/dags
+    - /01_project/logs:/opt/airflow/logs
 #   - ./plugins:/opt/airflow/plugins
-    - ./project_scripts/:/opt/airflow/dags/project_scripts
+    - /01_project/project_scripts/:/opt/airflow/dags/project_scripts
 #    -  /opt/airflow/__init__.py
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
