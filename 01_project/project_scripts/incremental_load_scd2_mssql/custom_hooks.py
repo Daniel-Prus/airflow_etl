@@ -85,7 +85,7 @@ class DbApiHook(BaseForDbApiHook):
         # from kwargs and store it on its own. We do not run "pop" here as we want to give the
         # Hook deriving from the DBApiHook to still have access to the field in it's constructor
         self.__schema = schema
-        self.log_sql = log_sql
+        self.log_sql = True
         self.query_start_datetime = None
         self.query_end_datetime = None
 

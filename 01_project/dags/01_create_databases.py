@@ -7,7 +7,7 @@ with DAG("01_build_databases_mssql", start_date=datetime(2022, 1, 1),
          schedule_interval=None, catchup=False, tags=['airflow_etl'],
          template_searchpath="/opt/airflow/dags/project_scripts/01_build_databases/") as dag:
     # SQL server connection: (SQL Server Configuration Manager -> Network Configuration -> Protocols -> TCP/IP -> IP8
-    # SQL Authentication
+    # SQL Authentication (set login and password in SSMS)
     # Host: 192.168.0.103
     # port: 1433
 
@@ -26,6 +26,10 @@ with DAG("01_build_databases_mssql", start_date=datetime(2022, 1, 1),
     )
 
     create_etl_job_summary_table = PostgresOperator(
+        # host: postgres
+        # login: airflow
+        # password: airflow
+        # Port: 5432
         task_id='create_etl_job_summary_table',
         postgres_conn_id='postgres_etl_conn',
         autocommit=True,

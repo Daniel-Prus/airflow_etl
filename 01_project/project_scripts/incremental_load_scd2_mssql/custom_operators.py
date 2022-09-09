@@ -71,8 +71,6 @@ class MsSqlCustomOperator(BaseOperator):
             self.hook_etl_job.insert_rows(table=self.etl_job_table, rows=row,
                                           target_fields=self.target_fields_if_success,
                                           commit_every=0)
-            with open('./sql_log.txt', 'w', encoding='UTF-8') as file:
-                file.write(self.hook.log_sql + '\n')
 
             # push to xcom number of rows for sql sensor
             context['ti'].xcom_push(key=f"{self.destination_db}.{self.destination_table}_rows_affected",
