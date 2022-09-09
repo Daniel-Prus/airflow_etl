@@ -273,6 +273,7 @@ class DbApiHook(BaseForDbApiHook):
             cur.execute(sql_statement)
 
         # According to PEP 249, this is -1 when query result is not applicable.
+
         if cur.rowcount >= 0:
             self.log.info("Rows affected: %s", cur.rowcount)
         self.rows_affected = cur.rowcount if cur.rowcount >= 0 else 0
@@ -487,6 +488,7 @@ class MsSqlHook(DbApiHook):
             password=conn.password,
             database=self.schema or conn.schema,
             port=conn.port,
+
         )
         return conn
 
