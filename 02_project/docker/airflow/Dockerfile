@@ -46,10 +46,13 @@ RUN pip install --upgrade "pip==20.2.4" && \
     pip install apache-airflow-providers-apache-hive==2.0.2 && \
     pip install apache-airflow-providers-apache-spark==2.0.1 && \
     pip install apache-airflow-providers-slack==4.0.1 && \
-    pip install apache-airflow-providers-http==2.0.1
+    pip install apache-airflow-providers-http==2.0.1 && \
+    pip install apache-airflow-providers-microsoft-mssql==3.2.0 && \
+    pip install apache-airflow-providers-postgres==5.2.1
+
 
 # Copy the airflow.cfg file (config)
-COPY ./config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+# COPY ./config/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
 # Set the owner of the files in AIRFLOW_HOME to the user airflow
 RUN chown -R airflow: ${AIRFLOW_HOME}

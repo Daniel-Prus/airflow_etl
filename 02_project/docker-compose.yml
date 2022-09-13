@@ -5,24 +5,29 @@ services:
 # DATABASE SERVICE
 ######################################################
   postgres:
-    image: postgres:13
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow_db
-      POSTGRES_HOST_AUTH_METHOD: trust
+    build: './docker/postgres'
+    restart: always
+    container_name: postgres
+    logging:
+      driver: "json-file"
+      options:
+          max-file: "5"
+          max-size: "10m"
     ports:
-      - 5432:5432
-      - 4200:4200
-      - 4300:4300
+      - 32769:5432
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow_db
+      - PGDATA=/var/lib/postgresql/data/pgdata
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "airflow" ]
-      interval: 5s
-      retries: 5
-    restart: always
+      test: [ "CMD", "pg_isready", "-q", "-d", "airflow_db", "-U", "airflow" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
 
   pgadmin:
       image: "dpage/pgadmin4:latest"
@@ -271,8 +276,11 @@ services:
     restart: always
     container_name: airflow
     volumes:
-      - ./mnt/airflow/airflow.cfg:/opt/airflow/airflow.cfg
-      - ./mnt/airflow/dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+#      - ./mnt/airflow/airflow.cfg:/opt/airflow/airflow.cfg
+#      - ./mnt/airflow/dags:/opt/airflow/dags
+      - ./project_scripts/:/opt/airflow/dags/project_scripts
     ports:
       - 8080:8080
     healthcheck:
