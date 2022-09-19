@@ -2,6 +2,9 @@ from airflow import DAG
 from datetime import datetime
 from airflow.providers.microsoft.mssql.operators.mssql import MsSqlOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.operators.bash import BashOperator
+from airflow.providers.apache.hive.operators.hive import HiveOperator
+
 
 with DAG("01_build_databases_mssql", start_date=datetime(2022, 1, 1),
          schedule_interval=None, catchup=False, tags=['airflow_etl'],
@@ -34,4 +37,13 @@ with DAG("01_build_databases_mssql", start_date=datetime(2022, 1, 1),
         postgres_conn_id='postgres_etl_conn',
         autocommit=True,
         sql='etl_job_summary_table.sql'
+    )
+
+    create_hdfs_path = BashOperator(
+        task_id="create_hdfs_path",
+        bash_command="""
+        hdfs dfs -mkdir -p /NewStoreRawData    
+        """,
+        do_xcom_push=False
+
     )

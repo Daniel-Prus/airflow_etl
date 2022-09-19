@@ -1,21 +1,16 @@
 from pyspark.sql import SparkSession
-from os.path import expanduser, join, abspath
 from pyspark.sql.functions import col, lit, current_timestamp
 
-warehouse_location = abspath('spark-warehouse')
-spark = SparkSession.builder.master("local[*]").appName("Get_rawdata_mssql") \
-    .config("spark.jars", "project_scripts/lib/enu/mssql-jdbc-11.2.0.jre8.jar") \
-    .config("spark.sql.warehouse.dir", warehouse_location) \
-    .enableHiveSupport().getOrCreate()
+spark = SparkSession.builder.getOrCreate()
 
 # spark-submit --jars project_scripts/lib/enu/mssql-jdbc-11.2.0.jre8.jar project_scripts/01_mssql.py
 
-mssql_url = "jdbc:sqlserver://localhost:1433;databaseName=NewStoreDB;encrypt=true;trustServerCertificate=true;"
+mssql_url = "jdbc:sqlserver://192.168.0.103:1433;databaseName=NewStoreDB;encrypt=true;trustServerCertificate=true;"
 username = "Daniel_SQL"
 password = "daniel123"
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 
-INGEST_DATE = str('2022-07-04')
+INGEST_DATE = '2022-07-04'
 
 sql_query = f"""
         SELECT o.OrderID, o.CustomerID as CustomerID_sk, o.EmployeeID, o.OrderDate, o.RequiredDate, o.ShippedDate, 
@@ -42,12 +37,7 @@ df = spark.read.format("jdbc") \
 df = df.withColumn('Created', current_timestamp()).withColumn('IngestDate', lit(INGEST_DATE)) \
     .withColumn('FileDate', lit(INGEST_DATE))
 
-print(df.show)
-"""
-df.write.save('project_scripts/test_output/NewStoreRawData', format='csv', mode='overwrite', header=True,
-                          partitionBy='FileDate')
-"""
-# df.write.save("hdfs://localhost:32763/NewStoreRawData/", format='parquet', mode='overwrite', partitionBy='FileDate')
+print(df.show())
 
-#     .option("dbtable", "(SELECT * FROM Customers) query") \
-#     .option("query", sql_query)
+df.coalesce(1).write.save("hdfs://namenode:9000/NewStoreRawData/", format='parquet', mode='overwrite', partitionBy='FileDate')
+
