@@ -12,9 +12,6 @@ driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 
 sql_query = """
 
-
-
-
 """
 
 df = spark.read.format("jdbc") \
@@ -22,7 +19,7 @@ df = spark.read.format("jdbc") \
     .option("driver", driver) \
     .option("user", username) \
     .option("password", password) \
-    .option("dbtable", "(SELECT * FROM NewStoreDB.dbo.Orders) query") \
+    .option("dbtable", "(SELECT * FROM Customers) query") \
     .load()
 
 print(df.show())
