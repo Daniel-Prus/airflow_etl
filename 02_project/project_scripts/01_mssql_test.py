@@ -1,3 +1,4 @@
+import sys
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, lit, current_timestamp
 
@@ -10,7 +11,7 @@ username = "Daniel_SQL"
 password = "daniel123"
 driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
 
-INGEST_DATE = '2022-07-04'
+INGEST_DATE = sys.argv[1]
 
 sql_query = f"""
         SELECT o.OrderID, o.CustomerID as CustomerID_sk, o.EmployeeID, o.OrderDate, o.RequiredDate, o.ShippedDate, 
@@ -39,5 +40,5 @@ df = df.withColumn('Created', current_timestamp()).withColumn('IngestDate', lit(
 
 print(df.show())
 
-df.coalesce(1).write.save("hdfs://namenode:9000/NewStoreRawData/", format='parquet', mode='overwrite', partitionBy='FileDate')
-
+df.coalesce(1).write.save("hdfs://namenode:9000/NewStoreRawData/", format='parquet', mode='overwrite',
+                          partitionBy='FileDate')

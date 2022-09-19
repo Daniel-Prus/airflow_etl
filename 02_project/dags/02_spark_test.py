@@ -12,8 +12,8 @@ with DAG("02_spark_test", start_date=datetime(2022, 1, 1),
         application="/opt/airflow/dags/project_scripts/01_mssql_test.py",
         name="Get_raw_data",
         jars="/opt/airflow/dags/project_scripts/lib/enu/mssql-jdbc-11.2.0.jre8.jar",
+        application_args=[INGEST_DATE],
         verbose=False,
-        params={'ingest_date': INGEST_DATE},
     )
 
 # "/opt/airflow/dags/project_scripts/01_build_databases/"
