@@ -40,7 +40,7 @@ df = spark.read.format("jdbc") \
     .load()
 
 df = df.withColumn('Created', current_timestamp()).withColumn('IngestDate', lit(INGEST_DATE)) \
-    .withColumn('FileDate', lit(INGEST_DATE))
+    .withColumn('Year', lit(INGEST_DATE))
 
 print(df.show)
 """

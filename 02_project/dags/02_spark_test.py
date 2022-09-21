@@ -5,7 +5,8 @@ from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOpe
 INGEST_DATE = '2022-07-04'
 
 with DAG("02_spark_test", start_date=datetime(2022, 1, 1),
-         schedule_interval=None, catchup=False, tags=['airflow_etl']) as dag:
+         schedule_interval=None, catchup=False, tags=['02_project']) as dag:
+
     spark_test = SparkSubmitOperator(
         task_id="spark_test",
         conn_id="spark_conn",

@@ -19,11 +19,14 @@ CREATE TABLE IF NOT EXISTS NewStoreDW.NewStoreRawData (
       ,CustomerID_bk INTEGER
       ,FirstName_cust VARCHAR(100)
       ,LastName_cust VARCHAR(100)
-      ,Address_cust CHAR VARCHAR(100)
-      ,City_cust CHAR VARCHAR(100)
+      ,Address_cust VARCHAR(100)
+      ,City_cust VARCHAR(100)
       ,PostalCode_cust VARCHAR(50)
       ,Country_cust VARCHAR(100)
       ,Phone_cust VARCHAR(100)
-      ,FileDate DATE
-      ,Created TIMESTAMP
+      ,Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
+COMMENT "Daily raw data NewStore"
+PARTITIONED BY (Year INTEGER, Month INTEGER, Day INTEGER)
+STORED AS PARQUET;
+

@@ -5,9 +5,8 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.bash import BashOperator
 from airflow.providers.apache.hive.operators.hive import HiveOperator
 
-
 with DAG("01_build_databases_mssql", start_date=datetime(2022, 1, 1),
-         schedule_interval=None, catchup=False, tags=['airflow_etl'],
+         schedule_interval=None, catchup=False, tags=['02_project'],
          template_searchpath="/opt/airflow/dags/project_scripts/01_build_databases/") as dag:
     # SQL server connection: (SQL Server Configuration Manager -> Network Configuration -> Protocols -> TCP/IP -> IP8
     # SQL Authentication (set login and password in SSMS)
@@ -46,4 +45,10 @@ with DAG("01_build_databases_mssql", start_date=datetime(2022, 1, 1),
         """,
         do_xcom_push=False
 
+    )
+
+    create_hive_rawdata_table = HiveOperator(
+        task_id="create_hive_rawdata_table",
+        hive_cli_conn_id="hive_conn",
+        hql="create_NewStoreDW_hive.hql"
     )

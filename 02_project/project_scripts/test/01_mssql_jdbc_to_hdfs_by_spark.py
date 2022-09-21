@@ -4,7 +4,7 @@ from pyspark.sql.functions import col, lit, current_timestamp
 
 spark = SparkSession.builder.getOrCreate()
 
-# spark-submit --jars project_scripts/lib/enu/mssql-jdbc-11.2.0.jre8.jar project_scripts/01_mssql_test.py
+# spark-submit --jars project_scripts/lib/enu/mssql-jdbc-11.2.0.jre8.jar project_scripts/test/01_mssql_jdbc_to_hdfs_by_spark.py
 
 mssql_url = "jdbc:sqlserver://192.168.0.103:1433;databaseName=NewStoreDB;encrypt=true;trustServerCertificate=true;"
 username = "Daniel_SQL"
@@ -47,7 +47,7 @@ df = df.withColumn('Created', current_timestamp()) \
 
 print(df.show())
 
-df.coalesce(1).write.save('project_scripts/test_output/NewStoreRawData', format='csv', mode='overwrite', header=True,
+df.coalesce(1).write.save('project_scripts/test/output/NewStoreRawData', format='csv', mode='overwrite', header=True,
               partitionBy=['Year', 'Month', 'Day'])
 """
 df.coalesce(1).write.save("hdfs://namenode:9000/NewStoreRawData/", format='parquet', mode='overwrite',
